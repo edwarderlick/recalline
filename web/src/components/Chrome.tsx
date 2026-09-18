@@ -133,19 +133,33 @@ export function Chrome({ children }: { children: React.ReactNode }) {
           </nav>
           <div className="flex items-center gap-space-sm">
             {w.address ? (
-              <button
-                type="button"
-                onClick={() => setPicker(true)}
-                className="flex items-center border border-on-surface bg-surface-container"
-                title="Change wallet"
-              >
-                <div className="px-space-sm py-1 border-r border-on-surface font-mono-spec text-mono-spec font-bold text-on-surface">
-                  {truncateAddress(w.address)}
-                </div>
-                <div className="hidden sm:block px-space-sm py-1 bg-surface-container-highest font-mono-spec text-mono-spec text-tertiary font-bold">
-                  {formatGen(w.balanceWei)}
-                </div>
-              </button>
+              <div className="flex items-center border border-on-surface bg-surface-container">
+                <button
+                  type="button"
+                  onClick={() => setPicker(true)}
+                  className="flex items-center"
+                  title="Change wallet"
+                >
+                  <div className="px-space-sm py-1 border-r border-on-surface font-mono-spec text-mono-spec font-bold text-on-surface">
+                    {truncateAddress(w.address)}
+                  </div>
+                  <div className="hidden sm:block px-space-sm py-1 bg-surface-container-highest font-mono-spec text-mono-spec text-tertiary font-bold">
+                    {formatGen(w.balanceWei)}
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    w.disconnect();
+                    setPicker(false);
+                    setMsg(null);
+                  }}
+                  className="px-space-sm py-1 border-l border-on-surface font-mono-spec text-mono-spec font-bold uppercase text-primary hover:bg-primary hover:text-on-primary"
+                  title="Disconnect wallet"
+                >
+                  DISCONNECT
+                </button>
+              </div>
             ) : (
               <button
                 type="button"
@@ -194,6 +208,18 @@ export function Chrome({ children }: { children: React.ReactNode }) {
               </button>
             </div>
             <div className="p-space-md flex flex-col gap-space-xs">
+              {w.address ? (
+                <button
+                  type="button"
+                  className="border-2 border-on-surface bg-primary text-on-primary px-space-md py-space-sm font-mono-spec text-mono-spec font-bold uppercase"
+                  onClick={() => {
+                    w.disconnect();
+                    setPicker(false);
+                  }}
+                >
+                  DISCONNECT {truncateAddress(w.address)}
+                </button>
+              ) : null}
               {w.providers.map((p) => (
                 <button
                   key={p.info.uuid}

@@ -20,6 +20,7 @@ export type AnnouncedProvider = {
 
 const LAST_ADDR_KEY = "recallline.lastAddress";
 const LAST_UUID_KEY = "recallline.lastProviderUuid";
+const SKIP_RESTORE_KEY = "recallline.skipRestore";
 
 const announced = new Map<string, AnnouncedProvider>();
 let listening6963 = false;
@@ -94,6 +95,23 @@ export function persistLastAddress(address: string | null): void {
   if (typeof window === "undefined") return;
   if (address) localStorage.setItem(LAST_ADDR_KEY, address);
   else localStorage.removeItem(LAST_ADDR_KEY);
+}
+
+export function markDisconnected(): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(SKIP_RESTORE_KEY, "1");
+  localStorage.removeItem(LAST_ADDR_KEY);
+  localStorage.removeItem(LAST_UUID_KEY);
+}
+
+export function markConnected(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(SKIP_RESTORE_KEY);
+}
+
+export function shouldSkipRestore(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(SKIP_RESTORE_KEY) === "1";
 }
 
 export function readLastAddress(): string | null {

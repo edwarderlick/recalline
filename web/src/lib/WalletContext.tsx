@@ -15,8 +15,11 @@ import {
   getBalanceWei,
   getChainId,
   listProviders,
+  markConnected,
+  markDisconnected,
   pickProvider,
   requestAccounts,
+  shouldSkipRestore,
   switchToStudioNext,
   watchProvider,
   type AnnouncedProvider,
@@ -92,6 +95,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       }
       const accs = await requestAccounts(p);
       const addr = accs[0] ?? null;
+      markConnected();
       setProvider(p);
       setAddress(addr);
       try {
@@ -114,11 +118,13 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const disconnect = useCallback(() => {
+    markDisconnected();
     setProvider(null);
     setAddress(null);
     setChainId(null);
     setBalanceWei(0n);
     setCredits(0n);
+    setError(null);
   }, []);
 
   const switchNetwork = useCallback(async () => {
@@ -143,6 +149,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       const list = listProviders();
       if (!cancelled) setProviders(list);
+      if (shouldSkipRestore()) return;
       const p = pickProvider();
       if (!p) return;
       try {

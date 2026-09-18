@@ -16,8 +16,8 @@ const TEMPLATES = [
 ] as const;
 
 /** Live settle on Studio: fake identity → expected NOHIT after window_end. HIT 3× is pytest, not this NDC. */
-function settleWindow(): { start: string; end: string } {
-  const gate = Date.now() + 25 * 3600 * 1000;
+function settleWindow(extraHours = 0): { start: string; end: string } {
+  const gate = Date.now() + (25 + extraHours) * 3600 * 1000;
   const start = new Date(gate);
   start.setUTCMinutes(0, 0, 0);
   if (start.getTime() < gate) start.setTime(start.getTime() + 3600 * 1000);
@@ -32,34 +32,38 @@ const SETTLE_EXAMPLES: {
   template: (typeof TEMPLATES)[number]["id"];
   product: string;
   premium: string;
+  extraHours?: number;
 }[] = [
   {
-    title: "NOHIT · DRUG_NDC",
-    expect: "After window_end, anyone settles. Fake NDC → NOHIT. Premium stays in pool. No wallet payout.",
+    title: "NOHIT · DRUG_NDC · WALLET A",
+    expect: "First wallet. After window_end, anyone settles. Fake NDC → NOHIT. Premium stays in pool.",
     template: "DRUG_NDC",
     product: "00000-0000-00",
     premium: "10",
   },
   {
-    title: "NOHIT · DRUG_NDC alt",
-    expect: "Same path, different package id. Lookback will not block a never-recalled fake NDC.",
+    title: "NOHIT · DRUG_NDC · WALLET B",
+    expect: "Second wallet. Different NDC and later window. Disconnect first, connect the other account, then fill this. Pool still needs ≥20 tGEN available (fund 20 more if reserved).",
     template: "DRUG_NDC",
-    product: "99999-1111-11",
+    product: "11111-2222-22",
     premium: "10",
+    extraHours: 24,
   },
   {
-    title: "NOHIT · DRUG_NAME",
-    expect: "Brand|generic with no FDA row. Settle → NOHIT.",
+    title: "NOHIT · DRUG_NAME · WALLET B/C",
+    expect: "Other wallet. Brand|generic with no FDA row. Settle → NOHIT.",
     template: "DRUG_NAME",
-    product: "ZZZNOHITBRAND|zzznohitgeneric",
+    product: "YYYWALLETB|yyywalletbgeneric",
     premium: "10",
+    extraHours: 26,
   },
   {
-    title: "NOHIT · DEVICE",
-    expect: "Made-up product code. Do not use a real Class I/II code from the last 30 days (buy lookback rejects).",
+    title: "NOHIT · DEVICE · WALLET C",
+    expect: "Third identity. Made-up product code. Do not use a real Class I/II code from the last 30 days.",
     template: "DEVICE_PRODUCT_CODE",
-    product: "ZZZ",
+    product: "QQQ",
     premium: "10",
+    extraHours: 48,
   },
 ];
 
@@ -286,7 +290,7 @@ export default function BuyPage() {
                       type="button"
                       className="border border-on-surface bg-surface-container p-space-sm text-left hover:bg-surface-container-high"
                       onClick={() => {
-                        const win = settleWindow();
+                        const win = settleWindow(ex.extraHours ?? 0);
                         setTemplate(ex.template);
                         setProductKey(ex.product);
                         setStartUtc(win.start);
