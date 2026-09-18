@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "disclaimer": "openFDA official record verified.",
+    "results": { "skip": 0, "limit": 10, "total": 1 }
+  },
+  "results": [
+    {
+      "recall_number": "D-LOOKBACK-I",
+      "reason_for_recall": "Recent Class I on same identity.",
+      "classification": "Class I",
+      "report_date": "20260215",
+      "product_ndc": ["0069-4210-66"]
+    }
+  ]
+}

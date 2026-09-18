@@ -1,0 +1,16 @@
+{
+  "meta": {
+    "disclaimer": "openFDA official record verified.",
+    "results": { "skip": 0, "limit": 10, "total": 1 }
+  },
+  "results": [
+    {
+      "recall_number": "D-9999-2025",
+      "reason_for_recall": "Wrong product identity in this row.",
+      "classification": "Class I",
+      "report_date": "20260305",
+      "product_ndc": ["1111-2222-33"],
+      "openfda": { "package_ndc": ["1111-2222-33"] }
+    }
+  ]
+}

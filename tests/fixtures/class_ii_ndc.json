@@ -1,0 +1,17 @@
+{
+  "meta": {
+    "disclaimer": "openFDA official record verified.",
+    "results": { "skip": 0, "limit": 10, "total": 1 }
+  },
+  "results": [
+    {
+      "recall_number": "D-0888-2025",
+      "reason_for_recall": "Labeling mix-up on secondary carton.",
+      "status": "Ongoing",
+      "classification": "Class II",
+      "report_date": "20260305",
+      "product_ndc": ["0078-0442-15"],
+      "openfda": { "package_ndc": ["0078-0442-15"] }
+    }
+  ]
+}

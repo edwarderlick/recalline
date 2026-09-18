@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "disclaimer": "openFDA official record verified.",
+    "results": { "skip": 0, "limit": 10, "total": 10 }
+  },
+  "results": [
+    {
+      "recall_number": "D-EARLY-I",
+      "reason_for_recall": "Early row Class I match must be considered.",
+      "classification": "Class I",
+      "report_date": "20260305",
+      "product_ndc": ["0069-4210-66"]
+    },
+    { "recall_number": "N2", "classification": "Class III", "report_date": "20260305", "product_ndc": ["0000-0000-00"] },
+    { "recall_number": "N3", "classification": "Class III", "report_date": "20260305", "product_ndc": ["0000-0000-00"] },
+    { "recall_number": "N4", "classification": "Class III", "report_date": "20260305", "product_ndc": ["0000-0000-00"] },
+    { "recall_number": "N5", "classification": "Class III", "report_date": "20260305", "product_ndc": ["0000-0000-00"] },
+    { "recall_number": "N6", "classification": "Class III", "report_date": "20260305", "product_ndc": ["0000-0000-00"] },
+    { "recall_number": "N7", "classification": "Class III", "report_date": "20260305", "product_ndc": ["0000-0000-00"] },
+    { "recall_number": "N8", "classification": "Class III", "report_date": "20260305", "product_ndc": ["0000-0000-00"] },
+    { "recall_number": "N9", "classification": "Class III", "report_date": "20260305", "product_ndc": ["0000-0000-00"] },
+    {
+      "recall_number": "D-LAST-III",
+      "reason_for_recall": "Last row only Class III different NDC.",
+      "classification": "Class III",
+      "report_date": "20260305",
+      "product_ndc": ["9999-9999-99"]
+    }
+  ]
+}

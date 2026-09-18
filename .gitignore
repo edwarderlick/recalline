@@ -1,0 +1,49 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+artifacts/
+.mypy_cache/
+
+# Node / Next
+web/node_modules/
+web/.next/
+web/out/
+web/.env.local
+node_modules/
+
+# Secrets — never commit keys
+.env
+.env.local
+*.pem
+*.key
+id_rsa*
+mnemonic.txt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Stitch HTML dumps (design source, not the shipped app)
+browse_covers_recallline_parametric_covers/
+buy_cover_wizard_recallline/
+cancel_refund_confirm_modal_recallline/
+cover_detail_recallline_parametric_fda_cover/
+how_recallline_works_parametric_specifications/
+insufficient_feed_terminal_state_modal_recallline/
+landing_protocol_portal_recallline/
+pool_economics_my_covers_recallline/
+recallline_hardware_wordmark/
+settle_confirm_modal_recallline/
+swiss_parametric_hardware_ui/
+
+# Internal session notes
+AGENT_LOG.md
+AGENTS.md

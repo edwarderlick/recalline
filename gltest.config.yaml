@@ -1,0 +1,10 @@
+networks:
+  default: studio_devnet
+  studio_devnet:
+    id: 61997
+    url: https://studio-dev.genlayer.com/api
+    leader_only: false
+    chain_type: studio_devnet
+paths:
+  contracts: contracts
+environment: .env
