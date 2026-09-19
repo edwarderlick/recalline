@@ -5,7 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { get_cover, get_economics, list_ids, type CoverRecord, type Economics } from "@/lib/contract";
 import { canSettle } from "@/lib/coverState";
 import { formatGen, formatUtc, statusLabel, truncateAddress } from "@/lib/format";
-import { missingDeployAddress } from "@/lib/network";
+import { withTimeout } from "@/lib/genlayer";
+import { CONTRACT_ADDRESS, missingDeployAddress } from "@/lib/network";
 import { StatusBadge } from "@/components/StatusBadge";
 
 type Filter =
@@ -36,13 +37,18 @@ export default function BrowsePage() {
 
   useEffect(() => {
     if (missingDeployAddress()) {
+      setErr("deploy address missing");
       setLoading(false);
       return;
     }
     let live = true;
     (async () => {
       try {
-        const [ids, e] = await Promise.all([list_ids(), get_economics()]);
+        const [ids, e] = await withTimeout(
+          Promise.all([list_ids(), get_economics()]),
+          15_000,
+          "list_ids/get_economics",
+        );
         const rows: CoverRecord[] = [];
         for (const id of ids) {
           try {

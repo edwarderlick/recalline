@@ -14,7 +14,6 @@ export default function MePage() {
   const [tab, setTab] = useState<"open" | "settled" | "credits">("open");
   const [covers, setCovers] = useState<CoverRecord[]>([]);
   const [err, setErr] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [credit, setCredit] = useState(0n);
 
@@ -51,28 +50,6 @@ export default function MePage() {
 
   const open = covers.filter((c) => c.status.toUpperCase() === "OPEN");
   const settled = covers.filter((c) => c.status.toUpperCase() !== "OPEN");
-
-  async function onWithdraw() {
-    setBusy(true);
-    setMsg(null);
-    try {
-      await w.doWithdraw();
-      const bal = w.address ? await get_credit(w.address) : 0n;
-      setCredit(bal);
-      setMsg("withdraw accepted");
-    } catch (e) {
-      const raw = e instanceof Error ? e.message : String(e);
-      const kept = w.address ? await get_credit(w.address) : credit;
-      setCredit(kept);
-      setMsg(
-        /max_generic_retries|no_matching_allocation|NO_MAJORITY/i.test(raw)
-          ? `Studio Next cannot finalize EOA payouts (empty validator committee). Your ${formatGen(kept)} credit is still on the contract. Cancel/buy/pool work; withdraw needs a network with ghost-contract EOA transfers.`
-          : raw,
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
 
   const tabCls = (id: typeof tab) =>
     tab === id
@@ -229,28 +206,33 @@ export default function MePage() {
           ) : null}
 
           {tab === "credits" ? (
-            <div className="border-2 border-on-surface bg-surface-container-lowest p-space-md md:p-space-lg flex flex-col md:flex-row md:items-center justify-between gap-space-lg shadow-[4px_4px_0px_#1c1b1b]">
-              <div className="flex flex-col gap-space-xs">
-                <span className="font-label-caps text-label-caps uppercase text-on-surface-variant font-bold">
-                  CLAIMABLE PROTOCOL BALANCE
-                </span>
-                <div className="font-mono-index text-display-hero font-bold tracking-tighter text-on-surface leading-none">
-                  {formatGen(credit > 0n ? credit : w.credits, { suffix: false })}{" "}
-                  <span className="text-headline-md font-normal text-on-surface-variant">tGEN</span>
-                </div>
+            <div className="flex flex-col gap-space-md">
+              <div className="border-2 border-on-surface bg-error-container text-on-error-container p-space-md font-mono-spec text-mono-spec font-bold uppercase">
+                EOA withdraw is broken on Studio Next. Leader emits the transfer, the validator committee is empty, the tx is CANCELED, credit is kept. Settlement surface on this network is the credit line below — not a wallet payout.
               </div>
-              <div className="flex flex-col gap-space-sm w-full md:w-auto shrink-0">
-                <button
-                  className="bg-primary hover:bg-primary-container text-on-primary border-2 border-on-surface px-space-lg py-4 font-headline-md text-headline-md uppercase font-bold tracking-tight shadow-[3px_3px_0px_#1c1b1b] disabled:opacity-50"
-                  type="button"
-                  disabled={busy || (credit === 0n && w.credits === 0n)}
-                  onClick={() => void onWithdraw()}
-                >
-                  {busy ? "SIGNING…" : "WITHDRAW CREDITS"}
-                </button>
-                <span className="font-mono-spec text-mono-spec text-center text-on-surface-variant font-bold">
-                  DESTINATION: {truncateAddress(w.address)}
-                </span>
+              <div className="border-2 border-on-surface bg-surface-container-lowest p-space-md md:p-space-lg flex flex-col md:flex-row md:items-center justify-between gap-space-lg shadow-[4px_4px_0px_#1c1b1b]">
+                <div className="flex flex-col gap-space-xs">
+                  <span className="font-label-caps text-label-caps uppercase text-on-surface-variant font-bold">
+                    PROTOCOL CREDIT (NOT A WALLET PAYOUT)
+                  </span>
+                  <div className="font-mono-index text-display-hero font-bold tracking-tighter text-on-surface leading-none">
+                    {formatGen(credit > 0n ? credit : w.credits, { suffix: false })}{" "}
+                    <span className="text-headline-md font-normal text-on-surface-variant">tGEN</span>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-space-sm w-full md:w-auto shrink-0">
+                  <button
+                    className="bg-surface-container-high text-on-surface border-2 border-on-surface px-space-lg py-4 font-headline-md text-headline-md uppercase font-bold tracking-tight opacity-60"
+                    type="button"
+                    disabled
+                    title="EOA withdraw does not finalize on Studio Next"
+                  >
+                    WITHDRAW DISABLED ON STUDIO NEXT
+                  </button>
+                  <span className="font-mono-spec text-mono-spec text-center text-on-surface-variant font-bold">
+                    CREDIT HELD FOR {truncateAddress(w.address)}
+                  </span>
+                </div>
               </div>
             </div>
           ) : null}

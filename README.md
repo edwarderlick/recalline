@@ -13,13 +13,13 @@ Not a court. No jury. No appeal. Not BackIt, Rainline, Remediate/OSV, or License
 | | |
 |---|---|
 | Network | Studio Next / `studio-dev` |
-| Chain ID | **61997** (`0xF22D`) — not `0xF21D` (61981), not studionet **61999** |
+| Chain ID | **61997** (`0xF22D`) — not studionet **61999** |
 | RPC | `https://studio-dev.genlayer.com/api` |
 | Explorer | [explorer-studio-dev.genlayer.com](https://explorer-studio-dev.genlayer.com/) |
 | Faucet | [studio-dev.genlayer.com](https://studio-dev.genlayer.com) |
-| Intelligent contract | [`0x5BB332c39D0578aF6CFaa67716B6af024aeD5c52`](https://explorer-studio-dev.genlayer.com/address/0x5BB332c39D0578aF6CFaa67716B6af024aeD5c52) |
-| Deploy tx | [`0xd8054a9c4dcc80167634700b80745b309bed710d0be78aee42ce66b6b032338e`](https://explorer-studio-dev.genlayer.com/tx/0xd8054a9c4dcc80167634700b80745b309bed710d0be78aee42ce66b6b032338e) |
-| Deploy result | **FINALIZED** · **FINISHED_WITH_RETURN** · **MAJORITY_AGREE** |
+| Intelligent contract | [`0xE21B59E9c34E54C2BF882cc71166A301b6DA5C6D`](https://explorer-studio-dev.genlayer.com/address/0xE21B59E9c34E54C2BF882cc71166A301b6DA5C6D) |
+| Deploy tx | [`0x9802b53e4d656638f1a5e66567d639dfc9bf732073fad35a3fbd8c6d820a9e7d`](https://explorer-studio-dev.genlayer.com/tx/0x9802b53e4d656638f1a5e66567d639dfc9bf732073fad35a3fbd8c6d820a9e7d) |
+| Deploy result | **ACCEPTED** · **FINISHED_WITH_RETURN** · 3/5 AGREE |
 | Runner | `py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng` (GenVM v0.3.0-rc7) |
 | JS | `genlayer-js@2.0.0-rc.1` chain `studioDevnet` |
 | Kit | `@genlayer/transaction-kit@0.1.0-rc.2` |
@@ -81,15 +81,15 @@ Settle: contract builds the openFDA URL, 32 KiB cap, scan ≤ 10 results includi
 
 ## On-chain proof (this contract)
 
-Recorded against `0x5BB332c39D0578aF6CFaa67716B6af024aeD5c52`:
+Recorded against `0xE21B59E9c34E54C2BF882cc71166A301b6DA5C6D`:
 
-| Action | Result |
-|---|---|
-| Deploy | [tx `0xd8054a9c…338e`](https://explorer-studio-dev.genlayer.com/tx/0xd8054a9c4dcc80167634700b80745b309bed710d0be78aee42ce66b6b032338e) FINALIZED + FINISHED_WITH_RETURN |
-| `fund_pool` | Pool deposited **30 tGEN** |
-| `buy_cover` | OPEN cover `0xb762c135f066691a4196c8fc8fe763098d1ee7a577aacf3e9941835a165b2343` · NDC `00000-0000-00` · window `2026-09-21Z`→`2026-09-23Z` · premium 10 |
-| `cancel` | Status **CANCELED** · refund **10 tGEN** booked · `get_credit` **10 tGEN** · reserved **0** · available **30** |
-| Reads | `get_cover` / `list_ids` / `get_economics` / `get_credit` match those numbers |
+| Action | tx | Result |
+|---|---|---|
+| Deploy | [`0x9802b53e…9e7d`](https://explorer-studio-dev.genlayer.com/tx/0x9802b53e4d656638f1a5e66567d639dfc9bf732073fad35a3fbd8c6d820a9e7d) | ACCEPTED · FINISHED_WITH_RETURN |
+| `fund_pool` | [`0x413e17c3…093d`](https://explorer-studio-dev.genlayer.com/tx/0x413e17c397ad9d3f8c94d9dde3df4363328a3668283c71580874ed14c628093d) | Pool deposited **30 tGEN** · status 5 · FINISHED_WITH_RETURN |
+| `buy_cover` | [`0xb56ee6c7…e4c`](https://explorer-studio-dev.genlayer.com/tx/0xb56ee6c7f8e78132cdad56fa55b917bc22381f757077b18b769c19fc0cb71e4c) | OPEN cover `0xa4a0a637…eb35` · NDC `00000-0000-00` · premium 10 · FINISHED_WITH_RETURN |
+| `cancel` | [`0xacb4766c…d61`](https://explorer-studio-dev.genlayer.com/tx/0xacb4766cb2291aa273262a9e227c31ff1c4896ab98e3e93ba72453c578141d61) | Status **CANCELED** · refund 10 tGEN booked · `get_credit` **10 tGEN** · reserved **0** · available **30** · FINISHED_WITH_RETURN |
+| Reads | — | `get_cover` / `list_ids` / `get_economics` / `get_credit` match those numbers |
 
 `buy_cover` already runs the same **openFDA `web.get` lookback** path settle uses.
 
@@ -136,7 +136,7 @@ Open [http://localhost:3000](http://localhost:3000). Switch the wallet to chain 
 
 | Name | Value |
 |---|---|
-| `NEXT_PUBLIC_CONTRACT_ADDRESS` | `0x5BB332c39D0578aF6CFaa67716B6af024aeD5c52` |
+| `NEXT_PUBLIC_CONTRACT_ADDRESS` | `0xE21B59E9c34E54C2BF882cc71166A301b6DA5C6D` |
 | `NEXT_PUBLIC_CHAIN_ID` | `61997` |
 | `NEXT_PUBLIC_STUDIO_RPC` | `https://studio-dev.genlayer.com/api` |
 | `NEXT_PUBLIC_STUDIO_EXPLORER` | `https://explorer-studio-dev.genlayer.com/` |

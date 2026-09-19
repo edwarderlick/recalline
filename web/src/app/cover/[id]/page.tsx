@@ -11,8 +11,9 @@ import { cancel, expire, get_cover, settle, type CoverRecord } from "@/lib/contr
 import { canCancel, canExpire, canSettle, isTerminal, maxPayout } from "@/lib/coverState";
 import { formatGen, formatUtc, formatUtcShort, truncateAddress } from "@/lib/format";
 import type { TxReceipt } from "@/lib/genlayer";
+import { withTimeout } from "@/lib/genlayer";
 import { normalizeCoverId } from "@/lib/ids";
-import { missingDeployAddress } from "@/lib/network";
+import { CONTRACT_ADDRESS, missingDeployAddress } from "@/lib/network";
 import { useWallet } from "@/lib/WalletContext";
 
 export default function CoverDetailPage() {
@@ -36,9 +37,10 @@ export default function CoverDetailPage() {
       return;
     }
     try {
-      setCover(await get_cover(id));
+      setCover(await withTimeout(get_cover(id), 12_000, "get_cover"));
       setErr(null);
     } catch (e) {
+      setCover(null);
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
@@ -78,10 +80,30 @@ export default function CoverDetailPage() {
   }
 
   if (loading) {
-    return <div className="p-space-lg font-mono-spec text-mono-spec">LOADING get_cover…</div>;
+    return <div className="p-space-lg font-mono-spec text-mono-spec">LOADING get_cover… (12s cap)</div>;
   }
   if (err || !cover) {
-    return <div className="p-space-lg font-mono-spec text-mono-spec text-error">{err || "unknown cover"}</div>;
+    return (
+      <div className="p-space-lg font-mono-spec text-mono-spec flex flex-col gap-space-sm max-w-3xl">
+        <div className="text-error whitespace-pre-wrap break-all">{err || "unknown cover"}</div>
+        <div className="text-on-surface-variant">
+          COVER ID {id || "—"}
+          <br />
+          CONTRACT {CONTRACT_ADDRESS || "missing"}
+        </div>
+        <button
+          type="button"
+          className="border-2 border-on-surface px-space-md py-space-sm font-bold uppercase w-fit"
+          onClick={() => {
+            setLoading(true);
+            setErr(null);
+            void load();
+          }}
+        >
+          RETRY get_cover
+        </button>
+      </div>
+    );
   }
 
   const showCancel = canCancel(cover, now, w.address);

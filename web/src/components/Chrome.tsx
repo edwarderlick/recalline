@@ -39,7 +39,6 @@ export function Chrome({ children }: { children: React.ReactNode }) {
   const path = usePathname() || "/";
   const w = useWallet();
   const [picker, setPicker] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const wrong =
     Boolean(w.address) && w.chainId != null && w.chainId !== CHAIN_ID;
@@ -50,19 +49,6 @@ export function Chrome({ children }: { children: React.ReactNode }) {
       if (!c.address) setPicker(true);
     } catch {
       setPicker(true);
-    }
-  }
-
-  async function onWithdraw() {
-    setBusy(true);
-    setMsg(null);
-    try {
-      await w.doWithdraw();
-      setMsg("withdraw accepted");
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(false);
     }
   }
 
@@ -173,14 +159,12 @@ export function Chrome({ children }: { children: React.ReactNode }) {
               <span className="font-mono-spec text-mono-spec text-on-surface font-bold mr-space-xs">
                 [CREDITS: {formatGen(w.credits)}]
               </span>
-              <button
-                className="font-label-caps text-label-caps text-primary hover:text-on-surface underline uppercase font-bold disabled:opacity-40"
-                type="button"
-                disabled={!w.address || w.credits === 0n || busy}
-                onClick={() => void onWithdraw()}
+              <span
+                className="font-label-caps text-label-caps uppercase font-bold text-on-surface-variant"
+                title="EOA withdraw does not finalize on Studio Next. Credit is kept."
               >
-                Withdraw
-              </button>
+                EOA WITHDRAW BROKEN ON STUDIO NEXT
+              </span>
             </div>
             <div className="flex items-center pl-space-xs border-l border-on-surface">
               <HardwareGlyph />

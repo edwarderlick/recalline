@@ -61,6 +61,25 @@ function browserChain() {
   };
 }
 
+export function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(
+      () => reject(new Error(`${label} timed out after ${Math.round(ms / 1000)}s — RPC or contract may be missing on this Studio Next snapshot`)),
+      ms,
+    );
+    p.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(t);
+        reject(e);
+      },
+    );
+  });
+}
+
 export function createReadClient(): AnyClient {
   return createClient({
     chain: browserChain() as never,
