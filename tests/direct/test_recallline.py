@@ -298,13 +298,33 @@ def test_transfer_fail_credits_withdraw_keeps_on_fail(direct_vm, direct_deploy, 
     with direct_vm.expect_revert("ghost fail"):
         contract.withdraw()
     assert contract.get_credit(buyer) == 3 * PREMIUM
-
+    
     fail["on"] = False
     contract.withdraw()
     assert contract.get_credit(buyer) == 0
     with direct_vm.expect_revert("no credit"):
         contract.withdraw()
 
+def test_successful_wallet_withdrawal(direct_vm, direct_deploy, direct_alice):
+    direct_vm.warp("2026-03-01T00:00:00Z")
+    contract = deploy_funded(direct_vm, direct_deploy, direct_alice)
+    cid = _buy(direct_vm, contract)
+    mock_fda(direct_vm, load_fix("class_i_ndc.json"))
+    
+    direct_vm.warp("2026-03-08T00:00:01Z")
+    contract.settle(cid)
+    
+    buyer = contract.get_cover(cid)["buyer"]
+    credited = contract.get_credit(buyer)
+    assert credited == 3 * PREMIUM
+    
+    # Successful withdraw
+    contract.withdraw()
+    
+    # Ensure credit is 0
+    assert contract.get_credit(buyer) == 0
+    eco = contract.get_economics()
+    assert eco["credits_outstanding"] == 0
 
 def test_scan_ten_results_considers_earlier_entries(direct_vm, direct_deploy, direct_alice):
     contract, cid = _open_then_settle(
