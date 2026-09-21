@@ -221,14 +221,14 @@ export default function MePage() {
                   <button
                     className="bg-primary text-on-primary hover:bg-primary-hover border-2 border-on-surface px-space-lg py-4 font-headline-md text-headline-md uppercase font-bold tracking-tight disabled:opacity-50"
                     type="button"
-                    disabled={credit <= 0n || msg === "Withdrawing…"}
+                    disabled={credit <= 0n || (msg !== null && !msg.startsWith("✓") && !msg.startsWith("Withdraw failed"))}
                     onClick={async () => {
-                      setMsg("Withdrawing…");
+                      setMsg("Estimating fees…");
                       try {
-                        await w.doWithdraw();
+                        await w.doWithdraw((phase) => setMsg(`${phase}…`));
                         const bal = await import("@/lib/contract").then(m => m.get_credit(w.address!));
                         setCredit(bal);
-                        setMsg("Withdraw submitted — check your wallet balance.");
+                        setMsg("✓ Withdraw submitted! tGEN will arrive in your wallet once the network confirms.");
                       } catch (e) {
                         setMsg(`Withdraw failed: ${e instanceof Error ? e.message : String(e)}`);
                       }

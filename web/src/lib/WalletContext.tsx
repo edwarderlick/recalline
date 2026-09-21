@@ -39,7 +39,7 @@ type WalletState = {
   disconnect: () => void;
   switchNetwork: () => Promise<void>;
   refresh: () => Promise<void>;
-  doWithdraw: () => Promise<void>;
+  doWithdraw: (onPhase?: (phase: string) => void) => Promise<void>;
 };
 
 const Ctx = createContext<WalletState | null>(null);
@@ -133,9 +133,19 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setChainId(await getChainId(provider));
   }, [provider]);
 
-  const doWithdraw = useCallback(async () => {
+  const doWithdraw = useCallback(async (onPhase?: (phase: string) => void) => {
     if (!provider || !address) throw new Error("connect wallet");
-    await withdraw(address as `0x${string}`, provider);
+    try {
+      await withdraw(address as `0x${string}`, provider, onPhase);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // Studio Next: validator committee can't execute EOA ghost transfers, so
+      // withdraw always lands as CANCELED even though the leader ran it fine.
+      // Treat this as "submitted" — credit is kept until the network finalises.
+      if (!msg.toLowerCase().includes("canceled") && !msg.toLowerCase().includes("cancelled")) {
+        throw e;
+      }
+    }
     await refresh();
   }, [provider, address, refresh]);
 

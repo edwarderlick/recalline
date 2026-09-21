@@ -201,6 +201,7 @@ export async function expire(
 export async function withdraw(
   account: `0x${string}`,
   provider: Eip1193Provider,
+  onPhase?: (phase: string) => void,
 ): Promise<TxReceipt> {
   return writeMethod({
     account,
@@ -208,5 +209,6 @@ export async function withdraw(
     functionName: "withdraw",
     args: [],
     payoutTo: account,
+    onPhase,
   });
 }
