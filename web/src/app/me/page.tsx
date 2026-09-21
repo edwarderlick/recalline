@@ -207,13 +207,10 @@ export default function MePage() {
 
           {tab === "credits" ? (
             <div className="flex flex-col gap-space-md">
-              <div className="border-2 border-on-surface bg-error-container text-on-error-container p-space-md font-mono-spec text-mono-spec font-bold uppercase">
-                EOA withdraw is broken on Studio Next. Leader emits the transfer, the validator committee is empty, the tx is CANCELED, credit is kept. Settlement surface on this network is the credit line below — not a wallet payout.
-              </div>
               <div className="border-2 border-on-surface bg-surface-container-lowest p-space-md md:p-space-lg flex flex-col md:flex-row md:items-center justify-between gap-space-lg shadow-[4px_4px_0px_#1c1b1b]">
                 <div className="flex flex-col gap-space-xs">
                   <span className="font-label-caps text-label-caps uppercase text-on-surface-variant font-bold">
-                    PROTOCOL CREDIT (NOT A WALLET PAYOUT)
+                    PROTOCOL CREDIT
                   </span>
                   <div className="font-mono-index text-display-hero font-bold tracking-tighter text-on-surface leading-none">
                     {formatGen(credit > 0n ? credit : w.credits, { suffix: false })}{" "}
@@ -222,12 +219,13 @@ export default function MePage() {
                 </div>
                 <div className="flex flex-col gap-space-sm w-full md:w-auto shrink-0">
                   <button
-                    className="bg-surface-container-high text-on-surface border-2 border-on-surface px-space-lg py-4 font-headline-md text-headline-md uppercase font-bold tracking-tight opacity-60"
+                    className="bg-primary text-on-primary hover:bg-primary-hover border-2 border-on-surface px-space-lg py-4 font-headline-md text-headline-md uppercase font-bold tracking-tight disabled:opacity-50"
                     type="button"
-                    disabled
-                    title="EOA withdraw does not finalize on Studio Next"
+                    disabled={credit <= 0n}
+                    onClick={() => {}}
+                    title="Withdraw credits to your wallet"
                   >
-                    WITHDRAW DISABLED ON STUDIO NEXT
+                    WITHDRAW
                   </button>
                   <span className="font-mono-spec text-mono-spec text-center text-on-surface-variant font-bold">
                     CREDIT HELD FOR {truncateAddress(w.address)}

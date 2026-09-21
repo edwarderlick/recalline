@@ -445,3 +445,78 @@ def test_validator_disagreement(direct_vm, direct_deploy, direct_alice):
     finally:
         gl_vm.run_nondet_default = run_func
         gl_vm.run_nondet = run_func
+
+
+def test_buy_cover_malformed_json_fails_closed(direct_vm, direct_deploy, direct_alice):
+    direct_vm.warp("2026-03-01T00:00:00Z")
+    contract = deploy_funded(direct_vm, direct_deploy, direct_alice)
+    direct_vm.clear_mocks()
+    direct_vm.mock_web(r".*api\.fda\.gov.*", {"status": 200, "body": "{malformed json"})
+    with direct_vm.expect_revert("lookback insufficient evidence"):
+        _buy(direct_vm, contract)
+
+def test_buy_cover_missing_meta_fails_closed(direct_vm, direct_deploy, direct_alice):
+    direct_vm.warp("2026-03-01T00:00:00Z")
+    contract = deploy_funded(direct_vm, direct_deploy, direct_alice)
+    direct_vm.clear_mocks()
+    direct_vm.mock_web(r".*api\.fda\.gov.*", {"status": 200, "body": '{"results": []}'})
+    with direct_vm.expect_revert("lookback insufficient evidence"):
+        _buy(direct_vm, contract)
+
+def test_buy_cover_oversized_fails_closed(direct_vm, direct_deploy, direct_alice):
+    direct_vm.warp("2026-03-01T00:00:00Z")
+    contract = deploy_funded(direct_vm, direct_deploy, direct_alice)
+    direct_vm.clear_mocks()
+    # Generate an oversized response > 32 KiB
+    big_body = '{"meta": {"results": {"skip": 0, "limit": 100, "total": 1}}, "results": [{"reason": "' + ('A' * 35000) + '"}]}'
+    direct_vm.mock_web(r".*api\.fda\.gov.*", {"status": 200, "body": big_body})
+    with direct_vm.expect_revert("lookback insufficient evidence"):
+        _buy(direct_vm, contract)
+
+def test_buy_cover_500_fails_closed(direct_vm, direct_deploy, direct_alice):
+    direct_vm.warp("2026-03-01T00:00:00Z")
+    contract = deploy_funded(direct_vm, direct_deploy, direct_alice)
+    direct_vm.clear_mocks()
+    direct_vm.mock_web(r".*api\.fda\.gov.*", {"status": 500, "body": "Internal Server Error"})
+    with direct_vm.expect_revert("lookback insufficient evidence"):
+        _buy(direct_vm, contract)
+
+def test_pagination_later_page_failure_fails_closed(direct_vm, direct_deploy, direct_alice):
+    import json
+    direct_vm.warp("2026-03-01T00:00:00Z")
+    contract = deploy_funded(direct_vm, direct_deploy, direct_alice)
+    cid = _buy(direct_vm, contract)
+    
+    direct_vm.clear_mocks()
+    direct_vm.mock_web(
+        r".*skip=0.*",
+        {"status": 200, "body": json.dumps({"meta": {"results": {"skip": 0, "limit": 100, "total": 150}}, "results": [{}] * 100})}
+    )
+    direct_vm.mock_web(
+        r".*skip=100.*",
+        {"status": 500, "body": "Internal Server Error"}
+    )
+    
+    direct_vm.warp("2026-03-08T00:00:01Z")
+    contract.settle(cid)
+    
+    cover = contract.get_cover(cid)
+    assert cover["status"] == "INSUFFICIENT"
+
+def test_pagination_safety_cap_exhaustion_fails_closed(direct_vm, direct_deploy, direct_alice):
+    import json
+    direct_vm.warp("2026-03-01T00:00:00Z")
+    contract = deploy_funded(direct_vm, direct_deploy, direct_alice)
+    cid = _buy(direct_vm, contract)
+    
+    direct_vm.clear_mocks()
+    direct_vm.mock_web(
+        r".*skip=.*",
+        {"status": 200, "body": json.dumps({"meta": {"results": {"skip": 0, "limit": 100, "total": 2000}}, "results": [{}] * 100})}
+    )
+    
+    direct_vm.warp("2026-03-08T00:00:01Z")
+    contract.settle(cid)
+    
+    cover = contract.get_cover(cid)
+    assert cover["status"] == "INSUFFICIENT"

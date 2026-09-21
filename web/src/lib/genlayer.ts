@@ -589,16 +589,12 @@ export async function writeMethod(opts: {
     payoutTo,
   });
   opts.onPhase?.("sign in wallet");
-  // Studio Next: in-execution EOA emit_transfer gets leader SUCCESS then
-  // an empty validator set / NO_MAJORITY / max_generic_retries_exceeded.
-  // leaderOnly skips that committee so the refund can finalize.
-  const leaderOnly = opts.functionName === "withdraw";
   const hash = (await client.writeContract({
     address: CONTRACT_ADDRESS,
     functionName: opts.functionName,
     args: opts.args ?? [],
     value: opts.value,
-    leaderOnly,
+    leaderOnly: false,
     fees: {
       distribution: fees.distribution,
       feeValue: fees.feeValue,

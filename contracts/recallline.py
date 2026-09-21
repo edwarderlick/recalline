@@ -650,19 +650,28 @@ class Recalline(gl.contract.Contract):
                 url = _build_url(template, product_key, start, end, skip)
                 fetched = _web_get(url)
                 if fetched.get("kind") != "OK":
-                    if fetched.get("reason") == "http 404" and skip > 0:
-                        break
-                    if best_scanned is None:
-                        return {
-                            "kind": "INSUFFICIENT",
-                            "classification": "",
-                            "matched_id": "",
-                            "reason": fetched.get("reason", "insufficient"),
-                            "match_date": "",
-                            "recall_id": "",
-                            "query_url": url,
-                        }
-                    break
+                    if fetched.get("reason") == "http 404":
+                        if skip == 0:
+                            return {
+                                "kind": "INSUFFICIENT",
+                                "classification": "",
+                                "matched_id": "",
+                                "reason": "http 404",
+                                "match_date": "",
+                                "recall_id": "",
+                                "query_url": url,
+                            }
+                        else:
+                            break
+                    return {
+                        "kind": "INSUFFICIENT",
+                        "classification": "",
+                        "matched_id": "",
+                        "reason": fetched.get("reason", "insufficient"),
+                        "match_date": "",
+                        "recall_id": "",
+                        "query_url": url,
+                    }
                 
                 res = fetched.get("results") or []
                 scanned = _scan(template, product_key, start, end, res, allow_llm)
@@ -680,6 +689,17 @@ class Recalline(gl.contract.Contract):
                 if len(res) < limit:
                     break
                 skip += limit
+
+            if skip >= 1000 and len(res) == limit:
+                return {
+                    "kind": "INSUFFICIENT",
+                    "classification": "",
+                    "matched_id": "",
+                    "reason": "safety cap reached",
+                    "match_date": "",
+                    "recall_id": "",
+                    "query_url": _build_url(template, product_key, start, end, 0),
+                }
 
             if best_scanned is None:
                 return {

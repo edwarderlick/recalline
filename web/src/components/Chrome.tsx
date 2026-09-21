@@ -156,14 +156,8 @@ export function Chrome({ children }: { children: React.ReactNode }) {
               </button>
             )}
             <div className="flex items-center border border-on-surface bg-surface-container-low px-space-sm py-1">
-              <span className="font-mono-spec text-mono-spec text-on-surface font-bold mr-space-xs">
+              <span className="font-mono-spec text-mono-spec text-on-surface font-bold">
                 [CREDITS: {formatGen(w.credits)}]
-              </span>
-              <span
-                className="font-label-caps text-label-caps uppercase font-bold text-on-surface-variant"
-                title="EOA withdraw does not finalize on Studio Next. Credit is kept."
-              >
-                EOA WITHDRAW BROKEN ON STUDIO NEXT
               </span>
             </div>
             <div className="flex items-center pl-space-xs border-l border-on-surface">

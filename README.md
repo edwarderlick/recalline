@@ -136,7 +136,7 @@ Open [http://localhost:3000](http://localhost:3000). Switch the wallet to chain 
 
 | Name | Value |
 |---|---|
-| `NEXT_PUBLIC_CONTRACT_ADDRESS` | `0xE21B59E9c34E54C2BF882cc71166A301b6DA5C6D` |
+| `NEXT_PUBLIC_CONTRACT_ADDRESS` | `0x6e93F227758009b7b07f0502b552A0fcfc672689` |
 | `NEXT_PUBLIC_CHAIN_ID` | `61997` |
 | `NEXT_PUBLIC_STUDIO_RPC` | `https://studio-dev.genlayer.com/api` |
 | `NEXT_PUBLIC_STUDIO_EXPLORER` | `https://explorer-studio-dev.genlayer.com/` |
@@ -155,7 +155,7 @@ Details: [`web/VERCEL.md`](web/VERCEL.md).
 python -m pytest tests/direct -q
 ```
 
-**29 passed** (direct / GenVM mock, time warp). That is how HIT 3×, Class II 2×, settle, expire, and withdraw-on-fail are proven.
+**36 passed** (direct / GenVM mock, time warp). That is how HIT 3×, Class II 2×, settle, expire, and withdraw-on-fail are proven.
 
 | Test | Asserts |
 |---|---|
@@ -230,7 +230,7 @@ Then set `NEXT_PUBLIC_CONTRACT_ADDRESS` to the new address.
 ```
 contracts/recallline.py   Intelligent contract
 web/                      Next.js app (Vercel root)
-tests/direct/             26 pytest cases
+tests/direct/             32 pytest cases
 tests/fixtures/           openFDA JSON fixtures
 scripts/                  deploy / smoke helpers
 fee-profile.json          Consensus v0.6 fee profile
