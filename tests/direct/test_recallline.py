@@ -295,7 +295,7 @@ def test_transfer_fail_credits_withdraw_keeps_on_fail(direct_vm, direct_deploy, 
     eco = contract.get_economics()
     assert eco["credits_outstanding"] == 3 * PREMIUM
 
-    with direct_vm.expect_revert("transfer failed"):
+    with direct_vm.expect_revert("ghost fail"):
         contract.withdraw()
     assert contract.get_credit(buyer) == 3 * PREMIUM
 
@@ -341,3 +341,87 @@ def test_list_ids_matches_get_cover_ids(direct_vm, direct_deploy, direct_alice):
     b = _buy(direct_vm, contract, key=NDC2)
     assert contract.list_ids() == contract.get_cover_ids()
     assert set(contract.list_ids()) == {a, b}
+
+def test_source_failure_on_lookback_fails_closed(direct_vm, direct_deploy, direct_alice):
+    direct_vm.warp("2026-03-01T00:00:00Z")
+    contract = deploy_funded(direct_vm, direct_deploy, direct_alice)
+    
+    # Mock FDA to return INSUFFICIENT for lookback
+    import json
+    direct_vm.clear_mocks()
+    direct_vm.mock_web(
+        r".*api\.fda\.gov.*",
+        {"status": 404, "body": json.dumps({"error": {"code": "NOT_FOUND", "message": "No matches found!"}})}
+    )
+    
+    direct_vm.value = 100 * 10**18
+    with direct_vm.expect_revert("lookback insufficient evidence"):
+        contract.buy_cover("DEVICE_PRODUCT_CODE", "9999", "2026-03-04T00:00:00Z", "2026-03-08T00:00:00Z")
+    direct_vm.value = 0
+
+def test_pagination_finds_hit_on_second_page(direct_vm, direct_deploy, direct_alice):
+    import json
+    direct_vm.warp("2026-03-01T00:00:00Z")
+    contract = deploy_funded(direct_vm, direct_deploy, direct_alice)
+    cid = _buy(direct_vm, contract)
+    
+    direct_vm.clear_mocks()
+    # Page 1: Empty results
+    direct_vm.mock_web(
+        r".*skip=0.*",
+        {"status": 200, "body": json.dumps({"meta": {"results": {"skip": 0, "limit": 100, "total": 150}}, "results": [{}] * 100})}
+    )
+    
+    # Page 2: Contains hit
+    direct_vm.mock_web(
+        r".*skip=100.*",
+        {"status": 200, "body": json.dumps({"meta": {"results": {"skip": 100, "limit": 100, "total": 150}}, "results": [
+            {
+                "classification": "Class I",
+                "product_ndc": "0069-4210-66",
+                "status": "Ongoing",
+                "recall_initiation_date": "20260305",
+                "report_date": "20260306",
+                "recall_number": "D-1234-5"
+            }
+        ]})}
+    )
+    
+    direct_vm.warp("2026-03-08T00:00:01Z")
+    contract.settle(cid)
+    cover = contract.get_cover(cid)
+    assert cover["status"] == "HIT"
+    assert cover["classification"] == "Class I"
+
+def test_validator_disagreement(direct_vm, direct_deploy, direct_alice):
+    direct_vm.warp("2026-03-01T00:00:00Z")
+    contract = deploy_funded(direct_vm, direct_deploy, direct_alice)
+    cid = _buy(direct_vm, contract)
+    
+    mock_fda(direct_vm, load_fix("class_i_ndc.json"))
+    
+    import sys
+    import genlayer as gl
+    gl_vm = sys.modules.get("genlayer.vm") or sys.modules.get("genlayer.gl.vm")
+    
+    run_func = getattr(gl_vm, "run_nondet_default", None) or getattr(gl_vm, "run_nondet")
+    
+    disagreed = []
+    def override_run_nondet(leader_fn, validator_fn):
+        res = run_func(leader_fn, validator_fn)
+        # Validator fn should reject a bad result
+        if not validator_fn(gl.vm.Return({"kind": "INSUFFICIENT"})):
+            disagreed.append(True)
+        return res
+        
+    try:
+        gl_vm.run_nondet_default = override_run_nondet
+        gl_vm.run_nondet = override_run_nondet
+        
+        direct_vm.warp("2026-03-08T00:00:01Z")
+        contract.settle(cid)
+        
+        assert len(disagreed) > 0
+    finally:
+        gl_vm.run_nondet_default = run_func
+        gl_vm.run_nondet = run_func

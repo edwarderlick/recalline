@@ -17,7 +17,7 @@ DynArray = gl.storage.DynArray
 
 
 MAX_BODY = 32 * 1024
-MAX_RESULTS = 10
+MAX_RESULTS = 100
 WINDOW_MIN_DAYS = 1
 WINDOW_MAX_DAYS = 14
 LEAD_HOURS = 24
@@ -313,23 +313,23 @@ def _row_recall_id(row: dict) -> str:
     return str(row.get("recall_number") or row.get("cfres_id") or row.get("res_event_number") or "")
 
 
-def _build_url(template: str, product_key: str, start: datetime, end: datetime) -> str:
+def _build_url(template: str, product_key: str, start: datetime, end: datetime, skip: int = 0) -> str:
     a = _fda_day(start)
     b = _fda_day(end)
     rng = f"[{a}+TO+{b}]"
     if template == T_DRUG_NDC:
         ndc = _norm_space(product_key)
-        q = f'search=product_ndc:"{ndc}"+AND+report_date:{rng}&limit=10'
+        q = f'search=product_ndc:"{ndc}"+AND+report_date:{rng}&limit=100&skip={skip}'
         return f"{FDA_DRUG}?{q}"
     if template == T_DRUG_NAME:
         brand, generic = _split_drug_name(product_key)
         q = (
             f'search=openfda.brand_name:"{brand}"+AND+openfda.generic_name:"{generic}"'
-            f"+AND+report_date:{rng}&limit=10"
+            f"+AND+report_date:{rng}&limit=100&skip={skip}"
         )
         return f"{FDA_DRUG}?{q}"
     code = product_key.strip().upper()
-    q = f'search=product_code:"{code}"+AND+event_date_initiated:{rng}&limit=10'
+    q = f'search=product_code:"{code}"+AND+event_date_initiated:{rng}&limit=100&skip={skip}'
     return f"{FDA_DEVICE}?{q}"
 
 
@@ -642,23 +642,56 @@ class Recalline(gl.contract.Contract):
         end: datetime,
         allow_llm: bool,
     ) -> dict:
-        url = _build_url(template, product_key, start, end)
-
         def leader_fn() -> dict:
-            fetched = _web_get(url)
-            if fetched.get("kind") != "OK":
+            skip = 0
+            limit = 100
+            best_scanned = None
+            while skip < 1000:
+                url = _build_url(template, product_key, start, end, skip)
+                fetched = _web_get(url)
+                if fetched.get("kind") != "OK":
+                    if fetched.get("reason") == "http 404" and skip > 0:
+                        break
+                    if best_scanned is None:
+                        return {
+                            "kind": "INSUFFICIENT",
+                            "classification": "",
+                            "matched_id": "",
+                            "reason": fetched.get("reason", "insufficient"),
+                            "match_date": "",
+                            "recall_id": "",
+                            "query_url": url,
+                        }
+                    break
+                
+                res = fetched.get("results") or []
+                scanned = _scan(template, product_key, start, end, res, allow_llm)
+                scanned["query_url"] = url
+                
+                if best_scanned is None:
+                    best_scanned = scanned
+                else:
+                    br1 = _class_rank(best_scanned.get("classification", ""))
+                    br2 = _class_rank(scanned.get("classification", ""))
+                    if br2 != 0:
+                        if br1 == 0 or br2 < br1:
+                            best_scanned = scanned
+                
+                if len(res) < limit:
+                    break
+                skip += limit
+
+            if best_scanned is None:
                 return {
                     "kind": "INSUFFICIENT",
                     "classification": "",
                     "matched_id": "",
-                    "reason": fetched.get("reason", "insufficient"),
+                    "reason": "no data",
                     "match_date": "",
                     "recall_id": "",
-                    "query_url": url,
+                    "query_url": _build_url(template, product_key, start, end, 0),
                 }
-            scanned = _scan(template, product_key, start, end, fetched.get("results") or [], allow_llm)
-            scanned["query_url"] = url
-            return scanned
+            return best_scanned
 
         def validator_fn(leaders_res: gl.vm.Result) -> bool:
             if not isinstance(leaders_res, gl.vm.Return):
@@ -689,9 +722,9 @@ class Recalline(gl.contract.Contract):
                 "reason": "bad verdict",
                 "match_date": "",
                 "recall_id": "",
-                "query_url": url,
+                "query_url": _build_url(template, product_key, start, end, 0),
             }
-        out["query_url"] = url
+        out["query_url"] = _build_url(template, product_key, start, end, 0)
         return out
 
     @gl.public.write.payable
@@ -734,6 +767,8 @@ class Recalline(gl.contract.Contract):
         look_end = now
         look_start = now - timedelta(days=LOOKBACK_DAYS)
         look = self._fetch_verdict(tpl, key, look_start, look_end, False)
+        if look.get("kind") == "INSUFFICIENT":
+            _ue("lookback insufficient evidence")
         if look.get("kind") == "HIT" and _class_rank(str(look.get("classification", ""))) in (1, 2):
             _ue("lookback Class I/II")
 
@@ -755,7 +790,7 @@ class Recalline(gl.contract.Contract):
             reserve=reserve,
             status=ST_OPEN,
             created_at=_iso(now),
-            query_url=_build_url(tpl, key, start, end),
+            query_url=_build_url(tpl, key, start, end, 0),
             classification="",
             matched_id="",
             match_reason="",
@@ -877,12 +912,8 @@ class Recalline(gl.contract.Contract):
         amount = self.credits[key]
         if amount == u256(0):
             _ue("no credit")
-        # transfer first; on failure REVERT and KEEP credit
-        try:
-            getter = getattr(gl, "get_contract_at", None) or gl.contract.get_at
-            getter(gl.message.sender_address).emit_transfer(value=amount)
-        except Exception:
-            _ue("transfer failed")
+        getter = getattr(gl, "get_contract_at", None) or gl.contract.get_at
+        getter(gl.message.sender_address).emit_transfer(value=amount)
         self.credits[key] = u256(0)
         if self.credits_outstanding >= amount:
             self.credits_outstanding = self.credits_outstanding - amount

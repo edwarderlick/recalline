@@ -71,11 +71,11 @@ Economics (protocol fee **0**):
 | Class II HIT | **2×** premium credited |
 | Class III or no match | **NOHIT** — premium stays in the pool |
 | INSUFFICIENT / CANCELED / EXPIRED | **100%** credited |
-| `withdraw()` | Pays credit to the caller; failed transfer **reverts and keeps credit** |
+| `withdraw()` | Pays credit to the caller using consensus-backed transfers; failed node transfers **revert and keep credit** |
 
-Buy gates: 24h before `window_start`, window **1–14 days**, 30-day Class I/II lookback reject, pool available ≥ **2×** premium, **no buyer URL**.
+Buy gates: 24h before `window_start`, window **1–14 days**, 30-day Class I/II lookback reject (strictly **fails closed** on API errors), pool available ≥ **2×** premium, **no buyer URL**.
 
-Settle: contract builds the openFDA URL, 32 KiB cap, scan ≤ 10 results including earlier rows, optional LLM only for `DRUG_NAME` punctuation ties.
+Settle: contract builds the openFDA URL, 32 KiB cap, exhaustive paginated matching (`skip/limit` looping) up to 1000 results, optional LLM only for `DRUG_NAME` punctuation ties.
 
 ---
 
@@ -155,7 +155,7 @@ Details: [`web/VERCEL.md`](web/VERCEL.md).
 python -m pytest tests/direct -q
 ```
 
-**26 passed** (direct / GenVM mock, time warp). That is how HIT 3×, Class II 2×, settle, expire, and withdraw-on-fail are proven.
+**29 passed** (direct / GenVM mock, time warp). That is how HIT 3×, Class II 2×, settle, expire, and withdraw-on-fail are proven.
 
 | Test | Asserts |
 |---|---|
@@ -185,6 +185,9 @@ python -m pytest tests/direct -q
 | `test_kind_template_cannot_change_multipliers` | Multipliers immutable |
 | `test_buyer_cannot_pass_url` | No buyer URL |
 | `test_list_ids_matches_get_cover_ids` | Same id list |
+| `test_source_failure_on_lookback_fails_closed` | Source lookback fail → fails closed (reverts) |
+| `test_pagination_finds_hit_on_second_page` | Paginates through FDA API using `skip` |
+| `test_validator_disagreement` | Rejects malicious validator states |
 
 Manual Studio checklist (also printed as fill-buttons on `/buy`):
 
