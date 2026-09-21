@@ -653,7 +653,7 @@ class Recalline(gl.contract.Contract):
                     if fetched.get("reason") == "http 404":
                         if skip == 0:
                             return {
-                                "kind": "INSUFFICIENT",
+                                "kind": "NOHIT",
                                 "classification": "",
                                 "matched_id": "",
                                 "reason": "http 404",

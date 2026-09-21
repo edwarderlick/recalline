@@ -17,8 +17,8 @@ Not a court. No jury. No appeal. Not BackIt, Rainline, Remediate/OSV, or License
 | RPC | `https://studio-dev.genlayer.com/api` |
 | Explorer | [explorer-studio-dev.genlayer.com](https://explorer-studio-dev.genlayer.com/) |
 | Faucet | [studio-dev.genlayer.com](https://studio-dev.genlayer.com) |
-| Intelligent contract | [`0x6e93F227758009b7b07f0502b552A0fcfc672689`](https://explorer-studio-dev.genlayer.com/address/0x6e93F227758009b7b07f0502b552A0fcfc672689) |
-| Deploy tx | [`0xac120c6ed75f29a6b685aab032ed3c623cf2e428017b49ed1858daee876b964d`](https://explorer-studio-dev.genlayer.com/tx/0xac120c6ed75f29a6b685aab032ed3c623cf2e428017b49ed1858daee876b964d) |
+| Intelligent contract | [`0xAC3498A0A8f38C3b916F9fAf80B4AFfF23f03B84`](https://explorer-studio-dev.genlayer.com/address/0xAC3498A0A8f38C3b916F9fAf80B4AFfF23f03B84) |
+| Deploy tx | [`0x246342aeb5f5211e795816981365b84bce72870ff735eb7822cb51357fdb8c19`](https://explorer-studio-dev.genlayer.com/tx/0x246342aeb5f5211e795816981365b84bce72870ff735eb7822cb51357fdb8c19) |
 | Deploy result | **ACCEPTED** · **FINISHED_WITH_RETURN** · 3/5 AGREE |
 | Runner | `py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng` (GenVM v0.3.0-rc7) |
 | JS | `genlayer-js@2.0.0-rc.1` chain `studioDevnet` |
@@ -98,11 +98,11 @@ Addressing Pavel Kolosov's review:
 
 ---
 
-## On-chain proof (current contract `0x6e93F227758009b7b07f0502b552A0fcfc672689`)
+## On-chain proof (current contract `0xAC3498A0A8f38C3b916F9fAf80B4AFfF23f03B84`)
 
 | Action | tx | Result |
 |---|---|---|
-| Deploy (steward v2) | [`0xac120c6e…964d`](https://explorer-studio-dev.genlayer.com/tx/0xac120c6ed75f29a6b685aab032ed3c623cf2e428017b49ed1858daee876b964d) | ACCEPTED · FINISHED_WITH_RETURN · 3/5 AGREE |
+| Deploy (steward v2) | [`0x246342ae…8c19`](https://explorer-studio-dev.genlayer.com/tx/0x246342aeb5f5211e795816981365b84bce72870ff735eb7822cb51357fdb8c19) | ACCEPTED · FINISHED_WITH_RETURN · 3/5 AGREE |
 | `fund_pool` | funded on live site | Pool ≥ 30 tGEN · FINISHED_WITH_RETURN |
 | `buy_cover` | live via `/buy` | OPEN cover · NDC `00000-0000-00` · FINISHED_WITH_RETURN |
 | `cancel` | live via cover page | CANCELED · credit 100% booked · FINISHED_WITH_RETURN |
@@ -152,7 +152,7 @@ Open [http://localhost:3000](http://localhost:3000). Switch the wallet to chain 
 
 | Name | Value |
 |---|---|
-| `NEXT_PUBLIC_CONTRACT_ADDRESS` | `0x6e93F227758009b7b07f0502b552A0fcfc672689` |
+| `NEXT_PUBLIC_CONTRACT_ADDRESS` | `0xAC3498A0A8f38C3b916F9fAf80B4AFfF23f03B84` |
 | `NEXT_PUBLIC_CHAIN_ID` | `61997` |
 | `NEXT_PUBLIC_STUDIO_RPC` | `https://studio-dev.genlayer.com/api` |
 | `NEXT_PUBLIC_STUDIO_EXPLORER` | `https://explorer-studio-dev.genlayer.com/` |

@@ -371,7 +371,7 @@ def test_source_failure_on_lookback_fails_closed(direct_vm, direct_deploy, direc
     direct_vm.clear_mocks()
     direct_vm.mock_web(
         r".*api\.fda\.gov.*",
-        {"status": 404, "body": json.dumps({"error": {"code": "NOT_FOUND", "message": "No matches found!"}})}
+        {"status": 503, "body": "Service Unavailable"}
     )
     
     direct_vm.value = 100 * 10**18
