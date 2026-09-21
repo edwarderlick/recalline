@@ -216,6 +216,10 @@ export default function MePage() {
                     {formatGen(credit > 0n ? credit : w.credits, { suffix: false })}{" "}
                     <span className="text-headline-md font-normal text-on-surface-variant">tGEN</span>
                   </div>
+                  <span className="font-mono-spec text-mono-spec text-on-surface-variant" style={{fontSize: '0.65rem', lineHeight: '1.3'}}>
+                    STUDIO NEXT DEVNET: EOA transfers are not supported by the validator committee.
+                    Credit is safe. Withdraw tx goes to full consensus but cannot finalise on this network.
+                  </span>
                 </div>
                 <div className="flex flex-col gap-space-sm w-full md:w-auto shrink-0">
                   <button
@@ -228,7 +232,7 @@ export default function MePage() {
                         await w.doWithdraw((phase) => setMsg(`${phase}…`));
                         const bal = await import("@/lib/contract").then(m => m.get_credit(w.address!));
                         setCredit(bal);
-                        setMsg("✓ Withdraw submitted! tGEN will arrive in your wallet once the network confirms.");
+                        setMsg("✓ Withdraw tx submitted via consensus. Credit is safe on-chain — Studio Next devnet cannot execute EOA ghost transfers, so the balance stays held here. Will pay out on a full GenLayer deployment.");
                       } catch (e) {
                         setMsg(`Withdraw failed: ${e instanceof Error ? e.message : String(e)}`);
                       }
