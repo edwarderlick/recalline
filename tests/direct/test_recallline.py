@@ -419,13 +419,13 @@ def test_pagination_finds_hit_on_second_page(direct_vm, direct_deploy, direct_al
     # Page 1: Empty results
     direct_vm.mock_web(
         r".*skip=0.*",
-        {"status": 200, "body": json.dumps({"meta": {"results": {"skip": 0, "limit": 100, "total": 150}}, "results": [{}] * 100})}
+        {"status": 200, "body": json.dumps({"meta": {"results": {"skip": 0, "limit": 100, "total": 101}}, "results": [{}] * 100})}
     )
     
     # Page 2: Contains hit
     direct_vm.mock_web(
         r".*skip=100.*",
-        {"status": 200, "body": json.dumps({"meta": {"results": {"skip": 100, "limit": 100, "total": 150}}, "results": [
+        {"status": 200, "body": json.dumps({"meta": {"results": {"skip": 100, "limit": 100, "total": 101}}, "results": [
             {
                 "classification": "Class I",
                 "product_ndc": "0069-4210-66",
@@ -442,6 +442,58 @@ def test_pagination_finds_hit_on_second_page(direct_vm, direct_deploy, direct_al
     cover = contract.get_cover(cid)
     assert cover["status"] == "HIT"
     assert cover["classification"] == "Class I"
+
+def test_pagination_missing_total_fails_closed(direct_vm, direct_deploy, direct_alice):
+    import json
+    direct_vm.warp("2026-03-01T00:00:00Z")
+    contract = deploy_funded(direct_vm, direct_deploy, direct_alice)
+    cid = _buy(direct_vm, contract)
+    
+    direct_vm.clear_mocks()
+    direct_vm.mock_web(
+        r".*skip=0.*",
+        {"status": 200, "body": json.dumps({"meta": {"results": {"skip": 0, "limit": 100}}, "results": [{}] * 100})}
+    )
+    
+    direct_vm.warp("2026-03-08T00:00:01Z")
+    contract.settle(cid)
+    assert contract.get_cover(cid)["status"] == "INSUFFICIENT"
+
+def test_pagination_short_page_fails_closed(direct_vm, direct_deploy, direct_alice):
+    import json
+    direct_vm.warp("2026-03-01T00:00:00Z")
+    contract = deploy_funded(direct_vm, direct_deploy, direct_alice)
+    cid = _buy(direct_vm, contract)
+    
+    direct_vm.clear_mocks()
+    direct_vm.mock_web(
+        r".*skip=0.*",
+        {"status": 200, "body": json.dumps({"meta": {"results": {"skip": 0, "limit": 100, "total": 150}}, "results": [{}] * 50})}
+    )
+    
+    direct_vm.warp("2026-03-08T00:00:01Z")
+    contract.settle(cid)
+    assert contract.get_cover(cid)["status"] == "INSUFFICIENT"
+
+def test_pagination_inconsistent_later_page_404(direct_vm, direct_deploy, direct_alice):
+    import json
+    direct_vm.warp("2026-03-01T00:00:00Z")
+    contract = deploy_funded(direct_vm, direct_deploy, direct_alice)
+    cid = _buy(direct_vm, contract)
+    
+    direct_vm.clear_mocks()
+    direct_vm.mock_web(
+        r".*skip=0.*",
+        {"status": 200, "body": json.dumps({"meta": {"results": {"skip": 0, "limit": 100, "total": 150}}, "results": [{}] * 100})}
+    )
+    direct_vm.mock_web(
+        r".*skip=100.*",
+        {"status": 404, "body": json.dumps({"error": {"code": "NOT_FOUND"}})}
+    )
+    
+    direct_vm.warp("2026-03-08T00:00:01Z")
+    contract.settle(cid)
+    assert contract.get_cover(cid)["status"] == "INSUFFICIENT"
 
 def test_validator_disagreement(direct_vm, direct_deploy, direct_alice):
     direct_vm.warp("2026-03-01T00:00:00Z")

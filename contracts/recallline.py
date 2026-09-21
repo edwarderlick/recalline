@@ -457,8 +457,22 @@ def _web_get(url: str) -> dict:
             "recall_id": "",
         }
     
+    if "total" not in meta_res:
+        return {
+            "kind": "INSUFFICIENT",
+            "classification": "",
+            "matched_id": "",
+            "reason": "missing meta.results.total",
+            "match_date": "",
+            "recall_id": "",
+        }
+
     try:
-        total = int(meta_res.get("total", 0))
+        total = int(meta_res["total"])
+        skip_val = int(meta_res.get("skip", 0))
+        limit_val = int(meta_res.get("limit", MAX_RESULTS))
+        if total < 0 or skip_val < 0 or limit_val < 0:
+            raise ValueError
     except (ValueError, TypeError):
         return {
             "kind": "INSUFFICIENT",
@@ -499,6 +513,8 @@ def _web_get(url: str) -> dict:
         "recall_id": "",
         "results": results[:MAX_RESULTS],
         "total": total,
+        "skip": skip_val,
+        "limit": limit_val,
     }
 
 
@@ -724,6 +740,19 @@ class Recalline(gl.contract.Contract):
                         if br1 == 0 or br2 < br1:
                             best_scanned = scanned
                 
+                if fetched.get("skip", 0) != skip:
+                    return {
+                        "kind": "INSUFFICIENT",
+                        "classification": "",
+                        "matched_id": "",
+                        "reason": "skip mismatch",
+                        "match_date": "",
+                        "recall_id": "",
+                        "query_url": _build_url(template, product_key, start, end, 0),
+                    }
+                
+                fetched_limit = fetched.get("limit", limit)
+                
                 if len(res) == 0:
                     if skip < total:
                         return {
@@ -737,7 +766,19 @@ class Recalline(gl.contract.Contract):
                         }
                     break
 
-                skip += limit
+                skip += len(res)
+                
+                if skip < total and len(res) < fetched_limit:
+                    return {
+                        "kind": "INSUFFICIENT",
+                        "classification": "",
+                        "matched_id": "",
+                        "reason": "short page",
+                        "match_date": "",
+                        "recall_id": "",
+                        "query_url": _build_url(template, product_key, start, end, 0),
+                    }
+                
                 if skip >= total:
                     break
 
