@@ -3,7 +3,7 @@ name = "recallline"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-  "genlayer-test",
+  "genlayer-test==0.30.0rc2",
 ]
 
 [tool.pytest.ini_options]

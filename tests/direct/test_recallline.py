@@ -318,13 +318,28 @@ def test_successful_wallet_withdrawal(direct_vm, direct_deploy, direct_alice):
     credited = contract.get_credit(buyer)
     assert credited == 3 * PREMIUM
     
-    # Successful withdraw
+    buyer_bytes = bytes.fromhex(buyer[2:])
+    initial_bal = direct_vm._balances.get(buyer_bytes, 0)
+    
+    # Mock EmitInternalMessage to actually increment the balance in the VM
+    def hook(_vm, request):
+        blob = str(request)
+        if "EmitInternalMessage" in blob:
+            direct_vm._balances[buyer_bytes] = direct_vm._balances.get(buyer_bytes, 0) + 3 * PREMIUM
+            return {"ok": None}
+        return {"error": "unhandled mock"}
+        
+    direct_vm._gl_call_hook = hook
+
     contract.withdraw()
     
     # Ensure credit is 0
     assert contract.get_credit(buyer) == 0
     eco = contract.get_economics()
     assert eco["credits_outstanding"] == 0
+    
+    # Ensure VM wallet balance increased
+    assert direct_vm._balances.get(buyer_bytes, 0) == initial_bal + 3 * PREMIUM
 
 def test_scan_ten_results_considers_earlier_entries(direct_vm, direct_deploy, direct_alice):
     contract, cid = _open_then_settle(
@@ -372,6 +387,21 @@ def test_source_failure_on_lookback_fails_closed(direct_vm, direct_deploy, direc
     direct_vm.mock_web(
         r".*api\.fda\.gov.*",
         {"status": 503, "body": "Service Unavailable"}
+    )
+    
+    direct_vm.value = 100 * 10**18
+    with direct_vm.expect_revert("lookback insufficient evidence"):
+        contract.buy_cover("DEVICE_PRODUCT_CODE", "9999", "2026-03-04T00:00:00Z", "2026-03-08T00:00:00Z")
+    direct_vm.value = 0
+
+def test_source_html_404_on_lookback_fails_closed(direct_vm, direct_deploy, direct_alice):
+    direct_vm.warp("2026-03-01T00:00:00Z")
+    contract = deploy_funded(direct_vm, direct_deploy, direct_alice)
+    
+    direct_vm.clear_mocks()
+    direct_vm.mock_web(
+        r".*api\.fda\.gov.*",
+        {"status": 404, "body": "<html><body>Not Found</body></html>"}
     )
     
     direct_vm.value = 100 * 10**18

@@ -373,6 +373,21 @@ def _web_get(url: str) -> dict:
             "recall_id": "",
         }
     if status == 404:
+        try:
+            data = json.loads(text)
+            if isinstance(data, dict) and isinstance(data.get("error"), dict) and data["error"].get("code") == "NOT_FOUND":
+                return {
+                    "kind": "OK",
+                    "classification": "",
+                    "matched_id": "",
+                    "reason": "",
+                    "match_date": "",
+                    "recall_id": "",
+                    "results": [],
+                    "total": 0,
+                }
+        except Exception:
+            pass
         return {
             "kind": "INSUFFICIENT",
             "classification": "",
@@ -430,6 +445,30 @@ def _web_get(url: str) -> dict:
             "match_date": "",
             "recall_id": "",
         }
+    
+    meta_res = meta["results"]
+    if not isinstance(meta_res, dict):
+        return {
+            "kind": "INSUFFICIENT",
+            "classification": "",
+            "matched_id": "",
+            "reason": "malformed meta.results",
+            "match_date": "",
+            "recall_id": "",
+        }
+    
+    try:
+        total = int(meta_res.get("total", 0))
+    except (ValueError, TypeError):
+        return {
+            "kind": "INSUFFICIENT",
+            "classification": "",
+            "matched_id": "",
+            "reason": "malformed pagination",
+            "match_date": "",
+            "recall_id": "",
+        }
+
     if not isinstance(results, list):
         return {
             "kind": "INSUFFICIENT",
@@ -439,6 +478,18 @@ def _web_get(url: str) -> dict:
             "match_date": "",
             "recall_id": "",
         }
+        
+    for item in results:
+        if not isinstance(item, dict):
+            return {
+                "kind": "INSUFFICIENT",
+                "classification": "",
+                "matched_id": "",
+                "reason": "malformed item in results",
+                "match_date": "",
+                "recall_id": "",
+            }
+
     return {
         "kind": "OK",
         "classification": "",
@@ -447,6 +498,7 @@ def _web_get(url: str) -> dict:
         "match_date": "",
         "recall_id": "",
         "results": results[:MAX_RESULTS],
+        "total": total,
     }
 
 
@@ -464,8 +516,6 @@ def _scan(
     matched_id = ""
     tie_row = None
     for row in rows[:MAX_RESULTS]:
-        if not isinstance(row, dict):
-            continue
         ok, mid = _identity_match(template, product_key, row)
         if not ok:
             if allow_llm and _punctuation_tie(template, product_key, row) and tie_row is None:
@@ -650,19 +700,6 @@ class Recalline(gl.contract.Contract):
                 url = _build_url(template, product_key, start, end, skip)
                 fetched = _web_get(url)
                 if fetched.get("kind") != "OK":
-                    if fetched.get("reason") == "http 404":
-                        if skip == 0:
-                            return {
-                                "kind": "NOHIT",
-                                "classification": "",
-                                "matched_id": "",
-                                "reason": "http 404",
-                                "match_date": "",
-                                "recall_id": "",
-                                "query_url": url,
-                            }
-                        else:
-                            break
                     return {
                         "kind": "INSUFFICIENT",
                         "classification": "",
@@ -674,6 +711,7 @@ class Recalline(gl.contract.Contract):
                     }
                 
                 res = fetched.get("results") or []
+                total = fetched.get("total", 0)
                 scanned = _scan(template, product_key, start, end, res, allow_llm)
                 scanned["query_url"] = url
                 
@@ -686,9 +724,22 @@ class Recalline(gl.contract.Contract):
                         if br1 == 0 or br2 < br1:
                             best_scanned = scanned
                 
-                if len(res) < limit:
+                if len(res) == 0:
+                    if skip < total:
+                        return {
+                            "kind": "INSUFFICIENT",
+                            "classification": "",
+                            "matched_id": "",
+                            "reason": "incomplete pagination",
+                            "match_date": "",
+                            "recall_id": "",
+                            "query_url": _build_url(template, product_key, start, end, 0),
+                        }
                     break
+
                 skip += limit
+                if skip >= total:
+                    break
 
             if skip >= 1000 and len(res) == limit:
                 return {

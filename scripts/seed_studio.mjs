@@ -16,7 +16,7 @@ const require = createRequire(import.meta.url);
 const keytar = require("keytar");
 
 const RPC = "https://studio-dev.genlayer.com/api";
-const IC = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0xE21B59E9c34E54C2BF882cc71166A301b6DA5C6D";
+const IC = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0xAC3498A0A8f38C3b916F9fAf80B4AFfF23f03B84";
 const ACCOUNT = process.env.GENLAYER_ACCOUNT || "coverlock-challenger";
 const THIRTY = 30n * 10n ** 18n;
 const TEN = 10n * 10n ** 18n;
